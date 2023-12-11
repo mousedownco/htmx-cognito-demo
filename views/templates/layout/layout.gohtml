@@ -1,0 +1,49 @@
+{{ define "layout"}}
+    <!doctype html>
+    <html lang="en">
+    <head>
+        <title>&lt;/&gt; Contacts.App - htmx</title>
+        <link rel="stylesheet" href="/static/site.css">
+        <link rel="stylesheet" href="/static/missing-1.1.1.min.css">
+        <script src="/static/js/htmx-1.9.6.min.js"></script>
+        <script src="/app-config.js"></script>
+        <script src="/static/js/main.js"></script>
+        <script>
+            htmx.logger = function (elt, event, data) {
+                // if (console) {
+                //     console.log(event, elt, data);
+                // }
+            }
+        </script>
+    </head>
+    <body hx-boost="true">
+    <main>
+        <header>
+            <h1>
+                <span class="allcaps">contacts.app</span>
+                <sub-title>A Demo Contacts Application</sub-title>
+            </h1>
+            <p><a href="/protected">PROTECTED</a></p>
+        </header>
+
+        {{ with .Flash }}
+            <div class="flash">{{ . }}</div>
+        {{ end }}
+        {{ template "content" .}}
+    </main>
+    </body>
+    <script>
+        (async function () {
+            window.authHeader = await currentAuthToken();
+            console.log('loaded authHeader', window.authHeader);
+        })();
+    </script>
+    <script>
+        document.body.addEventListener('htmx:configRequest', function (evt) {
+            console.log('configRequest', evt);
+            console.log('authHeader', window.authHeader);
+            evt.detail.headers['Authorization'] = window.authHeader
+        });
+    </script>
+    </html>
+{{ end }}

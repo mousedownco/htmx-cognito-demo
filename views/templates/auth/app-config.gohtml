@@ -1,0 +1,6 @@
+{{- define "part" -}}
+const appConfig = {
+    userPoolId: "{{ .Data.UserPoolId }}",
+    userPoolWebClientId: "{{ .Data.ClientId }}",
+}
+{{- end -}}

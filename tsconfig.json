@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "es6",               // Specify ECMAScript target version
+    "module": "esnext",            // Specify module code generation
+    "strict": true,                // Enable all strict type-checking options
+    "moduleResolution": "node",
+    "esModuleInterop": true,       // Enable module interop compatibility
+    "skipLibCheck": true,          // Skip type checking of declaration files
+    "forceConsistentCasingInFileNames": true, // Ensure case consistency in file names
+    "outDir": "./dist",            // Redirect output structure to the directory
+    "sourceMap": true              // Generates corresponding '.map' file
+  },
+  "include": [
+    "ts/**/*.ts"                   // Include all TypeScript files in ts folder and subfolders
+  ],
+  "exclude": [
+    "node_modules"                 // Exclude the node_modules directory
+  ]
+}

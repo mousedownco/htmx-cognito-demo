@@ -1,0 +1,157 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Cognito protected HTMX contact application
+Parameters:
+  gatewayDomain:
+    Type: String
+    Description: The domain name for the API Gateway
+  domainZone:
+    Type: String
+    Description: The Route53 zone that will host the gateway domain
+  signInPath:
+    Type: String
+    Description: The path to the sign in page for 302 redirects
+    Default: "'/auth/sign-in'"
+Resources:
+  GatewayCert:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref gatewayDomain
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Ref gatewayDomain
+          HostedZoneId: !Ref domainZone
+  ContactAppGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      OpenApiVersion: 3.0.1
+      StageName: stage
+      AlwaysDeploy: true
+      Auth:
+        Authorizers:
+          ContactAppAuthorizer:
+            UserPoolArn: !GetAtt ContactAppUserPool.Arn
+            Identity:
+              Header: Authorization
+      Domain:
+        BasePath: ""
+        DomainName: !Ref gatewayDomain
+        CertificateArn: !Ref GatewayCert
+        SecurityPolicy: TLS_1_2
+        EndpointConfiguration: REGIONAL
+        Route53:
+          HostedZoneId: !Ref domainZone
+  AuthorizerFailureRedirect:
+    Type: AWS::ApiGateway::GatewayResponse
+    Properties:
+      ResponseParameters:
+        gatewayresponse.header.Location: "'/auth/sign-in'"
+      ResponseType: AUTHORIZER_FAILURE
+      RestApiId: !Ref ContactAppGateway
+      StatusCode: '302'
+  UnauthorizedRedirect:
+    Type: AWS::ApiGateway::GatewayResponse
+    Properties:
+      ResponseParameters:
+        gatewayresponse.header.Location: "'/auth/sign-in'"
+      ResponseType: UNAUTHORIZED
+      RestApiId: !Ref ContactAppGateway
+      StatusCode: '302'
+  ContactApp:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      Handler: bootstrap
+      Runtime: provided.al2
+      Architectures:
+        - arm64
+      Environment:
+        Variables:
+          COGNITO_ENDPOINT: !Sub 'https://${AWS::StackName}.auth.${AWS::Region}.amazoncognito.com/oauth2/token'
+          COGNITO_CLIENT_ID: !Ref HtmxUserPoolClient
+          COGNITO_POOL_ID: !Ref ContactAppUserPool
+          COGNITO_REDIRECT_URI: !Sub 'https://${gatewayDomain}/auth/code'
+      Events:
+        gatewayRootEvent:
+          Type: Api
+          Properties:
+            Method: ANY
+            Path: /
+            RestApiId: !Ref ContactAppGateway
+        gatewayProtectedRootEvent:
+          Type: Api
+          Properties:
+            Method: ANY
+            Path: /protected
+            RestApiId: !Ref ContactAppGateway
+            Auth:
+              Authorizer: ContactAppAuthorizer
+        gatewayProtectedEvent:
+          Type: Api
+          Properties:
+            Method: ANY
+            Path: /protected/{proxy+}
+            RestApiId: !Ref ContactAppGateway
+            Auth:
+              Authorizer: ContactAppAuthorizer
+        gatewayEvent:
+          Type: Api
+          Properties:
+            Method: ANY
+            Path: /{proxy+}
+            RestApiId: !Ref ContactAppGateway
+  ContactAppUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: contact-app-pool
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+          StringAttributeConstraints:
+            MinLength: '0'
+            MaxLength: '2048'
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          RequireUppercase: true
+      UsernameAttributes: [ email ]
+      AutoVerifiedAttributes: [ email ]
+  HtmxUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: htmx-cognito-demo
+      UserPoolId: !Ref ContactAppUserPool
+      GenerateSecret: false
+      CallbackURLs: [ !Sub 'https://${gatewayDomain}/auth/code' ]
+      LogoutURLs: [ !Sub 'https://${gatewayDomain}/logout' ]
+      AllowedOAuthFlows: [ code, implicit ]
+      AllowedOAuthScopes: [ email, openid, profile ]
+      AllowedOAuthFlowsUserPoolClient: true
+      SupportedIdentityProviders: [ COGNITO ]
+  HtmxUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Ref AWS::StackName
+      UserPoolId: !Ref ContactAppUserPool
+Outputs:
+  #  UserPoolRegion:
+  #    Description: Region of the User Pool
+  #    Value: !Ref AWS::Region
+  UserPoolId:
+    Description: ID of the User Pool
+    Value: !Ref ContactAppUserPool
+  UserPoolClientId:
+    Description: ID of the User Pool Client
+    Value: !Ref HtmxUserPoolClient
+  BaseUrl:
+    Description: Distribution URL
+    Value: !Sub 'https://${gatewayDomain}'
+#  SignInUrl:
+#    Description: Cognito Sign In URL
+#    Value: !Sub 'https://${AWS::StackName}.auth.${AWS::Region}.amazoncognito.com/login?response_type=code&client_id=${HtmxUserPoolClient}&redirect_uri=https://${gatewayDomain}/auth/code'

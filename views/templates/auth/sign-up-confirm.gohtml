@@ -1,0 +1,15 @@
+{{ define "content" }}
+    <form id="signUpConfirm" hx-disable>
+        <input type="hidden" id="sub" name="sub" value="{{ .Data.Sub }}">
+        Code: <input type="text" id="code" name="code"/>
+        <button type="submit">Confirm</button>
+    </form>
+    <script>
+        document.getElementById('signUpConfirm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const username = document.getElementById('sub').value;
+            const confirmationCode = document.getElementById('code').value;
+            handleSignUpConfirmation({username, confirmationCode})
+        });
+    </script>
+{{ end }}

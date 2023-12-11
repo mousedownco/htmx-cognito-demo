@@ -1,0 +1,29 @@
+{{ define "content" }}
+    <form id="signIn" hx-disable>
+        <fieldset>
+            <legend>Sign In</legend>
+            <p>
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email">
+                <span class="error"></span>
+            </p>
+            <p>
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password">
+                <span class="error"></span>
+                <button type="submit">Sign In</button>
+        </fieldset>
+    </form>
+    <script>
+        document.getElementById('signIn').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const username = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            handleSignIn({username, password}).then(() => {
+                window.location.href = '/';
+            }).catch((error) => {
+                console.error(error);
+            });
+        });
+    </script>
+{{ end }}
