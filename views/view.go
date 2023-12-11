@@ -4,18 +4,14 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
-	"github.com/gorilla/sessions"
 	"html/template"
-	"log"
 	"net/http"
 	"path/filepath"
 )
 
 var TemplatesDir = "templates"
-var LayoutDir = "layout"
-var FlashName = "_flash"
 
-//go:embed templates/layout/* templates/contacts/* templates/auth/* templates/protected/*
+//go:embed templates/* templates/layout/* templates/auth/* templates/protected/*
 var templates embed.FS
 
 var StandardFunctions = template.FuncMap{
@@ -29,9 +25,9 @@ type View struct {
 }
 
 func NewView(layout string, files ...string) *View {
-	tmplFiles, e := layoutFiles(filepath.Join(TemplatesDir, LayoutDir))
-	if e != nil {
-		panic(e)
+	tmplFiles := []string{
+		"templates/layout/layout.gohtml",
+		"templates/layout/partial.gohtml",
 	}
 	tmplFiles = append(tmplFiles, viewFiles(files)...)
 	tmpl, e := template.New("").Funcs(StandardFunctions).ParseFS(templates, tmplFiles...)
@@ -46,9 +42,8 @@ type ViewData struct {
 	Flash string
 }
 
-func (v *View) Render(w http.ResponseWriter, r *http.Request, data map[string]interface{}) {
-	flash := GetFlash(w, r)
-	vd := ViewData{Data: data, Flash: flash}
+func (v *View) Render(w http.ResponseWriter, _ *http.Request, data map[string]interface{}) {
+	vd := ViewData{Data: data}
 	var rb bytes.Buffer
 	e := v.Template.ExecuteTemplate(&rb, v.Layout, vd)
 	if e != nil {
@@ -61,11 +56,10 @@ func (v *View) Render(w http.ResponseWriter, r *http.Request, data map[string]in
 	}
 }
 
-func layoutFiles(dir string) ([]string, error) {
-	return []string{
-		"templates/layout/layout.gohtml",
-		"templates/layout/partial.gohtml",
-	}, nil
+func ViewHandler(view *View) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		view.Render(w, r, nil)
+	}
 }
 
 func viewFiles(files []string) []string {
@@ -74,35 +68,4 @@ func viewFiles(files []string) []string {
 		paths = append(paths, filepath.Join(TemplatesDir, file))
 	}
 	return paths
-}
-
-var store = sessions.NewCookieStore([]byte("a-secret-string"))
-
-func Flash(w http.ResponseWriter, r *http.Request, value string) {
-	session, e := store.Get(r, FlashName)
-	if e != nil {
-		log.Printf("Error getting session: %v\n", e)
-		return
-	}
-	session.AddFlash(value, "message")
-	e = session.Save(r, w)
-	if e != nil {
-		log.Printf("Error saving session: %v\n", e)
-	}
-}
-
-func GetFlash(w http.ResponseWriter, r *http.Request) string {
-	session, e := store.Get(r, FlashName)
-	if e != nil {
-		log.Printf("Error loading session: %v\n", e)
-		return ""
-	}
-
-	fm := session.Flashes("message")
-	if fm == nil {
-		return ""
-	}
-
-	_ = session.Save(r, w)
-	return fmt.Sprintf("%v", fm[0])
 }

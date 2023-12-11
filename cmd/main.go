@@ -6,7 +6,6 @@ import (
 	"github.com/awslabs/aws-lambda-go-api-proxy/gorillamux"
 	"github.com/gorilla/mux"
 	"github.com/mousedownco/htmx-cognito-demo/auth"
-	"github.com/mousedownco/htmx-cognito-demo/contacts"
 	"github.com/mousedownco/htmx-cognito-demo/protected"
 	"github.com/mousedownco/htmx-cognito-demo/views"
 	"log"
@@ -20,8 +19,6 @@ var staticDir embed.FS
 var port = ":8080"
 
 func main() {
-	cs := contacts.NewService()
-
 	cog := auth.NewCognito(
 		os.Getenv("COGNITO_ENDPOINT"),
 		os.Getenv("COGNITO_CLIENT_ID"),
@@ -30,8 +27,7 @@ func main() {
 	r := mux.NewRouter()
 
 	r.PathPrefix("/static/").Handler(http.FileServer(http.FS(staticDir)))
-	r.Handle("/",
-		http.RedirectHandler("/contacts", http.StatusTemporaryRedirect))
+	r.Handle("/", views.ViewHandler(views.NewView("layout", "home.gohtml")))
 
 	r.Handle("/app-config.js",
 		auth.HandleAppConfig(
@@ -49,31 +45,6 @@ func main() {
 
 	pr := r.PathPrefix("/protected").Subrouter()
 	pr.Handle("", auth.HandleAuth(protected.HandleIndex(views.NewView("layout", "protected/index.gohtml")))).Methods("GET")
-
-	cr := r.PathPrefix("/contacts").Subrouter()
-	cr.Handle("", contacts.HandleIndex(cs, views.NewView("partial", "contacts/rows.gohtml"))).Headers("HX-Trigger", "search")
-
-	// This handler differs from the book's implementation, see README for details
-	cr.Handle("/delete",
-		contacts.HandleDeleteSelected(cs,
-			views.NewView("layout", "contacts/index.gohtml", "contacts/rows.gohtml"))).Methods("POST")
-	cr.Handle("", contacts.HandleIndex(cs,
-		views.NewView("layout", "contacts/index.gohtml", "contacts/rows.gohtml")))
-	cr.Handle("/count", contacts.HandleCountGet(cs)).Methods("GET")
-	cr.Handle("/new",
-		contacts.HandleNew(views.NewView("layout", "contacts/new.gohtml"))).
-		Methods("GET")
-	cr.Handle("/new",
-		contacts.HandleNewPost(cs, views.NewView("layout", "contacts/new.gohtml"))).Methods("POST")
-	cr.Handle("/{id:[0-9]+}",
-		contacts.HandleView(cs, views.NewView("layout", "contacts/show.gohtml"))).Methods("GET")
-	cr.Handle("/{id:[0-9]+}/edit",
-		contacts.HandleEdit(cs, views.NewView("layout", "contacts/edit.gohtml"))).Methods("GET")
-	cr.Handle("/{id:[0-9]+}/edit",
-		contacts.HandleEditPost(cs, views.NewView("layout", "contacts/edit.gohtml"))).Methods("POST")
-	cr.Handle("/{id:[0-9]+}/email", contacts.HandleEmailGet(cs)).Methods("GET")
-	cr.Handle("/{id:[0-9]+}",
-		contacts.HandleDelete(cs, views.NewView("layout", "contacts/edit.gohtml"))).Methods("DELETE")
 
 	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != "" {
 		log.Printf("Running Lambda function %s", os.Getenv("AWS_LAMBDA_FUNCTION_NAME"))
