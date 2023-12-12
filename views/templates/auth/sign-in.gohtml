@@ -20,6 +20,7 @@
             const username = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             handleSignIn({username, password}).then(() => {
+                console.log('Signed In');
                 window.location.href = '/';
             }).catch((error) => {
                 console.error(error);

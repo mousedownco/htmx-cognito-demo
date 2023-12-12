@@ -1,0 +1,5 @@
+{{ define "part" }}
+    <span>{{ .Data.User.Email }}</span>
+    <li><a href="/profile">Profile</a></li>
+    <li><a hx-on:click="handleSignOut()">Sign Out</a></li>
+{{ end }}

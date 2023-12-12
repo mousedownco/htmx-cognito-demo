@@ -51,3 +51,14 @@ func HandleSignIn(view *views.View) http.HandlerFunc {
 		view.Render(w, r, nil)
 	}
 }
+
+func HandleProfile(signedOutView *views.View, signedInView *views.View) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		jwt, e := DecodeJwtPayload(r.Header.Get("Authorization"))
+		if e != nil {
+			signedOutView.Render(w, r, nil)
+			return
+		}
+		signedInView.Render(w, r, map[string]interface{}{"User": JwtUser(jwt)})
+	}
+}

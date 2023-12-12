@@ -6913,6 +6913,8 @@
   }
   async function handleSignIn({ username, password }) {
     try {
+      console.log("username:", username);
+      console.log("signing in...");
       const { isSignedIn, nextStep } = await signIn({ username, password });
       console.log("nestStep:", nextStep);
     } catch (error) {
@@ -6922,6 +6924,8 @@
   async function handleSignOut() {
     try {
       await signOut();
+      console.log("signed out");
+      window.location.href = "/";
     } catch (error) {
       console.log("error signing out:", error);
     }
@@ -6929,7 +6933,6 @@
   async function currentAuthToken() {
     try {
       const session = await fetchAuthSession2();
-      console.log("session:", session?.tokens?.idToken?.toString());
       return session?.tokens?.idToken?.toString();
     } catch (error) {
       console.log("error getting current session:", error);
@@ -6940,6 +6943,7 @@
   window.handleSignUpConfirmation = handleSignUpConfirmation;
   window.handleSignIn = handleSignIn;
   window.currentAuthToken = currentAuthToken;
+  window.handleSignOut = handleSignOut;
 })();
 /*! Bundled license information:
 

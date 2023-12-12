@@ -8,40 +8,29 @@
         <script src="/static/js/htmx-1.9.6.min.js"></script>
         <script src="/app-config.js"></script>
         <script src="/static/js/main.js"></script>
+        </script>
         <script>
-            htmx.logger = function (elt, event, data) {
-                // if (console) {
-                //     console.log(event, elt, data);
-                // }
-            }
+            (async function () {
+                window.authHeader = await currentAuthToken();
+                console.log('loaded authHeader', window.authHeader);
+            })();
         </script>
     </head>
     <body hx-boost="true">
     <main>
         <header>
             <h1>
-                <span class="allcaps">contacts.app</span>
-                <sub-title>A Demo Contacts Application</sub-title>
+                <span class="allcaps">cognito.app</span>
+                <sub-title>HTMX Cognito Demo Application</sub-title>
             </h1>
-            <p><a href="/protected">PROTECTED</a></p>
-        </header>
+            <div hx-get="/auth/profile" hx-trigger="load"></div>
 
-        {{ with .Flash }}
-            <div class="flash">{{ . }}</div>
-        {{ end }}
+        </header>
         {{ template "content" .}}
     </main>
     </body>
     <script>
-        (async function () {
-            window.authHeader = await currentAuthToken();
-            console.log('loaded authHeader', window.authHeader);
-        })();
-    </script>
-    <script>
         document.body.addEventListener('htmx:configRequest', function (evt) {
-            console.log('configRequest', evt);
-            console.log('authHeader', window.authHeader);
             evt.detail.headers['Authorization'] = window.authHeader
         });
     </script>

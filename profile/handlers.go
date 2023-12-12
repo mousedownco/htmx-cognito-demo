@@ -1,4 +1,4 @@
-package protected
+package profile
 
 import (
 	"github.com/mousedownco/htmx-cognito-demo/auth"
