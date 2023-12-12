@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
-Description: Cognito protected HTMX contact application
+Description: Cognito HTMX Demo application
 Parameters:
   gatewayDomain:
     Type: String
@@ -79,19 +79,19 @@ Resources:
             Method: ANY
             Path: /
             RestApiId: !Ref ContactAppGateway
-        gatewayProtectedRootEvent:
+        gatewayProfileRootEvent:
           Type: Api
           Properties:
             Method: ANY
-            Path: /protected
+            Path: /profile
             RestApiId: !Ref ContactAppGateway
             Auth:
               Authorizer: ContactAppAuthorizer
-        gatewayProtectedEvent:
+        gatewayProfileEvent:
           Type: Api
           Properties:
             Method: ANY
-            Path: /protected/{proxy+}
+            Path: /profile/{proxy+}
             RestApiId: !Ref ContactAppGateway
             Auth:
               Authorizer: ContactAppAuthorizer
@@ -128,8 +128,12 @@ Resources:
       ClientName: htmx-cognito-demo
       UserPoolId: !Ref ContactAppUserPool
       GenerateSecret: false
-      CallbackURLs: [ !Sub 'https://${gatewayDomain}/auth/code' ]
-      LogoutURLs: [ !Sub 'https://${gatewayDomain}/logout' ]
+      CallbackURLs:
+        - 'http://localhost:8080/auth/code'
+        - !Sub 'https://${gatewayDomain}/auth/code'
+      LogoutURLs:
+        - 'http://localhost:8080/logout'
+        - !Sub 'https://${gatewayDomain}/logout'
       AllowedOAuthFlows: [ code, implicit ]
       AllowedOAuthScopes: [ email, openid, profile ]
       AllowedOAuthFlowsUserPoolClient: true
@@ -150,7 +154,7 @@ Outputs:
     Description: ID of the User Pool Client
     Value: !Ref HtmxUserPoolClient
   BaseUrl:
-    Description: Distribution URL
+    Description: API Gateway URL
     Value: !Sub 'https://${gatewayDomain}'
 #  SignInUrl:
 #    Description: Cognito Sign In URL

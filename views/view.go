@@ -11,7 +11,7 @@ import (
 
 var TemplatesDir = "templates"
 
-//go:embed templates/* templates/layout/* templates/auth/* templates/protected/*
+//go:embed templates/* templates/layout/* templates/auth/* templates/profile/*
 var templates embed.FS
 
 var StandardFunctions = template.FuncMap{
