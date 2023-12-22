@@ -1,0 +1,5 @@
+{{ define "content" }}
+    {{ if .Data.Target }}
+        <div hx-get="{{ .Data.Target }}" hx-trigger="load" hx-target="body" hx-push-url="true"></div>
+    {{ end }}
+{{ end }}

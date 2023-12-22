@@ -62,6 +62,13 @@ func ViewHandler(view *View) http.HandlerFunc {
 	}
 }
 
+func RedirectHandler(view *View) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		target := r.URL.Query().Get("target")
+		view.Render(w, r, map[string]interface{}{"Target": target})
+	}
+}
+
 func viewFiles(files []string) []string {
 	var paths []string
 	for _, file := range files {

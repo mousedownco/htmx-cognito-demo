@@ -28,6 +28,8 @@ func main() {
 
 	r.Handle("/", views.ViewHandler(
 		views.NewView("layout", "home.gohtml")))
+	r.Handle("/shell", views.RedirectHandler(
+		views.NewView("layout", "shell.gohtml")))
 	r.Handle("/app-config.js",
 		auth.HandleAppConfig(
 			os.Getenv("COGNITO_POOL_ID"),
@@ -43,13 +45,14 @@ func main() {
 		views.NewView("layout", "auth/sign-up-confirm.gohtml"))).Methods("GET")
 	ar.Handle("/sign-in", auth.HandleSignIn(
 		views.NewView("layout", "auth/sign-in.gohtml"))).Methods("GET")
-	ar.Handle("/code", auth.HandleCognitoCallback(cog, "/contacts")).Methods("GET")
+	ar.Handle("/code", auth.HandleCognitoCallback(cog, "/profile")).Methods("GET")
 	ar.Handle("/profile", auth.HandleProfile(
 		views.NewView("partial", "auth/nav-sign-in.gohtml"),
 		views.NewView("partial", "auth/nav-profile.gohtml"))).Methods("GET")
 
 	pr := r.PathPrefix("/profile").Subrouter()
 	pr.Handle("", auth.HandleAuth(profile.HandleIndex(views.NewView("layout", "profile/index.gohtml")))).Methods("GET")
+	pr.Handle("/settings", views.ViewHandler(views.NewView("layout", "profile/settings.gohtml"))).Methods("GET")
 
 	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != "" {
 		log.Printf("Running Lambda function %s", os.Getenv("AWS_LAMBDA_FUNCTION_NAME"))

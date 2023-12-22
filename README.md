@@ -48,14 +48,31 @@ sequenceDiagram
     API Gateway-->>-Browser: 200 protected/resource HTML
 ```
 
-## Unauthorized Redirect
+## Deep Link Redirect
 
 When a request is made directly to a protected resource, the required Authorization header is not present. Even though the browser may have a valid Access Token stored locally, it will not be provided in the Authorization header because the htmx library is not making the call.
 
 ```mermaid
 sequenceDiagram
-    Browser->>API Gateway: GET /protected/resource (Authorization:null)
-    API Gateway->>Browser: 403 -> 302 auth/login
+    participant Browser
+    participant Amplify
+    participant Cognito
+    participant API Gateway
+    participant Lambda
+    Browser->>+API Gateway: GET /protected/resource (Authorization:null, HX-Request:null)
+    API Gateway->>+Cognito: CognitoAuthorizer
+    Cognito-->>-API Gateway: ❌ Not Authorized
+    API Gateway-)API Gateway: 403 -> 200:htmx-shell HTML [HX-Location:/protected/resource]
+    API Gateway->>-Browser: 200:htmx-shell HTML
+    Browser-->>+Amplify: fetchAuthSession()
+    Amplify-)Amplify: Load Token
+    Amplify-->-Browser: JWT token
+    Browser-->API Gateway: hx-get="/protected/resource" (Authorization:idToken)
+    API Gateway->>+Cognito: CognitoAuthorizer
+    Cognito-->>-API Gateway: ✅ Authorized
+    API Gateway->>+Lambda: Handle(protected/resource) JWT
+    Lambda-->>-API Gateway: 200 protected/resource HTML
+    
 ```
 
 ### Previous SPA Approach

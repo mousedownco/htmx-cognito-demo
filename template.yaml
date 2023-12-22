@@ -57,6 +57,14 @@ Resources:
       ResponseType: UNAUTHORIZED
       RestApiId: !Ref ContactAppGateway
       StatusCode: '302'
+  MissingTokenRedirect:
+    Type: AWS::ApiGateway::GatewayResponse
+    Properties:
+      ResponseParameters:
+        gatewayresponse.header.Location: "'/shell?target=' + $context.path"
+      ResponseType: MISSING_AUTHENTICATION_TOKEN
+      RestApiId: !Ref ContactAppGateway
+      StatusCode: '302'
   ContactApp:
     Type: AWS::Serverless::Function
     Metadata:
