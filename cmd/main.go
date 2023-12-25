@@ -29,7 +29,7 @@ func main() {
 	r.Handle("/", views.ViewHandler(
 		views.NewView("layout", "home.gohtml")))
 	r.Handle("/shell", views.RedirectHandler(
-		views.NewView("layout", "shell.gohtml")))
+		views.NewView("shell", "shell.gohtml")))
 	r.Handle("/app-config.js",
 		auth.HandleAppConfig(
 			os.Getenv("COGNITO_POOL_ID"),
@@ -40,11 +40,11 @@ func main() {
 
 	ar := r.PathPrefix("/auth").Subrouter()
 	ar.Handle("/sign-up", auth.HandleSignUp(
-		views.NewView("layout", "auth/sign-up.gohtml"))).Methods("GET")
+		views.NewView("shell", "auth/sign-up.gohtml"))).Methods("GET")
 	ar.Handle("/sign-up-confirm", auth.HandleSignUpConfirm(
-		views.NewView("layout", "auth/sign-up-confirm.gohtml"))).Methods("GET")
+		views.NewView("shell", "auth/sign-up-confirm.gohtml"))).Methods("GET")
 	ar.Handle("/sign-in", auth.HandleSignIn(
-		views.NewView("layout", "auth/sign-in.gohtml"))).Methods("GET")
+		views.NewView("shell", "auth/sign-in.gohtml"))).Methods("GET")
 	ar.Handle("/code", auth.HandleCognitoCallback(cog, "/profile")).Methods("GET")
 	ar.Handle("/profile", auth.HandleProfile(
 		views.NewView("partial", "auth/nav-sign-in.gohtml"),

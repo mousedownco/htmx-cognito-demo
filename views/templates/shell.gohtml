@@ -1,5 +1,19 @@
 {{ define "content" }}
-    {{ if .Data.Target }}
+    {{- if eq .Data.HxRequest "true" -}}
+        {{- if eq .Data.HxAuthenticated "true" -}}
+            {{- /* Request was made to a resource that requestor does not have access to */ -}}
+            <div hx-get="/404"
+                 hx-trigger="load"
+                 hx-target="body"
+                 hx-push-url="true"></div>
+        {{- else -}}
+            {{- /* Unauthenticated request was made to a protected resoruce */ -}}
+            <div hx-get="/auth/sign-in?target={{ .Data.Target }}"
+                 hx-trigger="load"
+                 hx-target="body"
+                 hx-push-url="true"></div>
+        {{- end -}}
+    {{- else -}}
         <div hx-get="{{ .Data.Target }}" hx-trigger="load" hx-target="body" hx-push-url="true"></div>
-    {{ end }}
-{{ end }}
+    {{- end -}}
+{{- end -}}

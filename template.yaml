@@ -26,7 +26,6 @@ Resources:
     Properties:
       OpenApiVersion: 3.0.1
       StageName: stage
-      AlwaysDeploy: true
       Auth:
         Authorizers:
           ContactAppAuthorizer:
@@ -41,30 +40,24 @@ Resources:
         EndpointConfiguration: REGIONAL
         Route53:
           HostedZoneId: !Ref domainZone
-  AuthorizerFailureRedirect:
-    Type: AWS::ApiGateway::GatewayResponse
-    Properties:
-      ResponseParameters:
-        gatewayresponse.header.Location: "'/auth/sign-in'"
-      ResponseType: AUTHORIZER_FAILURE
-      RestApiId: !Ref ContactAppGateway
-      StatusCode: '302'
   UnauthorizedRedirect:
     Type: AWS::ApiGateway::GatewayResponse
     Properties:
-      ResponseParameters:
-        gatewayresponse.header.Location: "'/auth/sign-in'"
+      ResponseTemplates:
+        text/html: |
+          <html>
+              <head>
+                  <meta 
+                    http-equiv="refresh" 
+                    content="0;url=/shell?target=$context.path&hxr=$input.params('HX-Request')&hxa=$input.params('X-HX-Auth')">
+              </head>
+              <body>
+                <div hx-get="/shell?target=$context.path&hxr=$input.params('HX-Request')&hxa=$input.params('X-HX-Auth')" hx-trigger="load" hx-target="body" hx-push-url="true"></div>
+              </body>
+          </html>
       ResponseType: UNAUTHORIZED
       RestApiId: !Ref ContactAppGateway
-      StatusCode: '302'
-  MissingTokenRedirect:
-    Type: AWS::ApiGateway::GatewayResponse
-    Properties:
-      ResponseParameters:
-        gatewayresponse.header.Location: "'/shell?target=' + $context.path"
-      ResponseType: MISSING_AUTHENTICATION_TOKEN
-      RestApiId: !Ref ContactAppGateway
-      StatusCode: '302'
+      StatusCode: '200'
   ContactApp:
     Type: AWS::Serverless::Function
     Metadata:

@@ -27,6 +27,7 @@ type View struct {
 func NewView(layout string, files ...string) *View {
 	tmplFiles := []string{
 		"templates/layout/layout.gohtml",
+		"templates/layout/shell.gohtml",
 		"templates/layout/partial.gohtml",
 	}
 	tmplFiles = append(tmplFiles, viewFiles(files)...)
@@ -65,7 +66,13 @@ func ViewHandler(view *View) http.HandlerFunc {
 func RedirectHandler(view *View) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		target := r.URL.Query().Get("target")
-		view.Render(w, r, map[string]interface{}{"Target": target})
+		hxRequest := r.URL.Query().Get("hxr")
+		hxAuthenticated := r.URL.Query().Get("hxa")
+		view.Render(w, r, map[string]interface{}{
+			"Target":          target,
+			"HxRequest":       hxRequest,
+			"HxAuthenticated": hxAuthenticated,
+		})
 	}
 }
 
